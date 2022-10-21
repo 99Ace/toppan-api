@@ -226,7 +226,7 @@ const main = async () => {
     } catch (e) {
       console.log(e);
       res.status(404);
-      res.send("Error retrieving data");
+      res.send("Unable to retrieving data");
     }
   });
 
@@ -254,6 +254,6 @@ const main = async () => {
   });
 };
 main();
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, () => {
   console.log("Server has started");
 });
