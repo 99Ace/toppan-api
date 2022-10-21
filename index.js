@@ -114,9 +114,9 @@ const main = async () => {
       var teachers = req.query.teacher || null;
 
       teachers && !Array.isArray(teachers) ? (teachers = [teachers]) : null;
-      console.log(teachers);
+      // console.log(teachers);
       var query = `'${teachers.join("','")}'`;
-      console.log(query);
+      // console.log(query);
 
       const sql = `SELECT students.email
         FROM teachers
@@ -134,11 +134,12 @@ const main = async () => {
             res.status(404);
             res.send("Error retrieving data");
           }
-          const data = {
-            students: Object.values(JSON.parse(JSON.stringify(result))),
-          };
+          const response = Object.values(JSON.parse(JSON.stringify(result)));
+          const students = [];
+          response.map((t) => students.push(t.email));
+
           res.status(200);
-          res.send(data);
+          res.send({ students });
         });
       });
 
@@ -190,7 +191,37 @@ const main = async () => {
       var notificationMessage = students.splice(0, 1)[0];
       console.log(notificationMessage, students);
 
-      res.sendStatus(204);
+      var query = `'${students.join("','")}'`;
+      console.log(query);
+
+      const sql = `SELECT students.email
+                  FROM teachers
+                      INNER JOIN students_teachers ON teachers.id = students_teachers.teacher_id
+                      INNER JOIN students ON students_teachers.student_id = students.id
+                  WHERE (
+                        teachers.email = "${teacherEmail}"
+                        OR students.email IN (${query})
+                      )
+                      AND students.get_notification = 1
+                      AND students.is_suspended = 0
+                  GROUP BY student_id
+                  HAVING
+                      count(DISTINCT student_id) = 1;`;
+      console.log(sql);
+      con.connect(function (err) {
+        con.query(sql, function (err, result) {
+          if (err) {
+            res.status(404);
+            res.send("Error retrieving data");
+          }
+          const response = Object.values(JSON.parse(JSON.stringify(result)));
+          const recipents = [];
+          response.map((t) => recipents.push(t.email));
+
+          res.status(200);
+          res.send({ recipents });
+        });
+      });
       // res.send("Route 4: Retrieve Notifcation");
     } catch (e) {
       console.log(e);
