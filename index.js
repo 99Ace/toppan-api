@@ -25,6 +25,10 @@ con.connect(function (err) {
 const sendSQL = (sql) => {
   con.connect(function (err) {
     con.query(sql, function (err, result) {
+      // if (err) {
+      //   res.status(500);
+      //   res.send("Error writing to database");
+      // }
       return Object.values(JSON.parse(JSON.stringify(result)));
     });
   });
@@ -153,15 +157,23 @@ const main = async () => {
   app.post("/api/suspend", (req, res) => {
     try {
       // get data from body
-      var { student: studentEmail } = req.body;
-      console.log(studentEmail);
+      var studentEmail = req.body.student || null;
 
-      res.sendStatus(204);
-      // res.send("Route 3: Suspend Student [POST]");
+      if (studentEmail) {
+        var sql = `UPDATE students
+                  SET is_suspended = 1
+                  WHERE
+                  email = "${studentEmail}";`;
+        sendSQL(sql);
+
+        res.sendStatus(204);
+      } else {
+        res.status(500);
+        res.send("Error updating student record");
+      }
     } catch (e) {
-      console.log(e);
-      res.status(404);
-      res.send("Error retrieving data");
+      res.status(500);
+      res.send("Error updating student record");
     }
   });
 
