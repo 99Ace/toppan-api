@@ -25,7 +25,7 @@ con.connect(function (err) {
 const sendSQL = (sql) => {
   con.connect(function (err) {
     con.query(sql, function (err, result) {
-      return result;
+      return Object.values(JSON.parse(JSON.stringify(result)));
     });
   });
 };
@@ -45,7 +45,7 @@ const main = async () => {
       if (teacherEmail && students && Array.isArray(students)) {
         console.log("data ok", teacherEmail, students);
 
-        var sql = `INSERT INTO teachers (email)
+        const sql = `INSERT INTO teachers (email)
         SELECT *
         FROM (
                 SELECT
@@ -63,7 +63,7 @@ const main = async () => {
 
         // ITERATE THROUGH THE STUDENTS LIST
         students.map((studentEmail) => {
-          let sqlStudent = `INSERT INTO students (
+          const sqlStudent = `INSERT INTO students (
             email, is_suspended, get_notification
           ) SELECT * FROM (
               SELECT '${studentEmail}',
@@ -80,7 +80,7 @@ const main = async () => {
           // INSERT STUDENT (IF NOT EXIST)
           sendSQL(sqlStudent);
 
-          let sqlRs = `INSERT INTO
+          const sqlRs = `INSERT INTO
             students_teachers (teacher_id, student_id)
             SELECT t.id, s.id
             FROM teachers t, students s
@@ -111,11 +111,37 @@ const main = async () => {
 
       teachers && !Array.isArray(teachers) ? (teachers = [teachers]) : null;
       console.log(teachers);
+      var query = `'${teachers.join("','")}'`;
+      console.log(query);
 
-      res.status(200);
-      res.send(
-        "Route 2: retrieve a list of students common to a given list of teachers"
-      );
+      const sql = `SELECT students.email
+        FROM teachers
+          INNER JOIN students_teachers ON teachers.id = students_teachers.teacher_id
+          INNER JOIN students ON students_teachers.student_id = students.id
+        WHERE
+          teachers.email IN (${query})
+        GROUP BY student_id
+        HAVING
+          count(DISTINCT teacher_id) = ${teachers.length};`;
+
+      con.connect(function (err) {
+        con.query(sql, function (err, result) {
+          if (err) {
+            res.status(404);
+            res.send("Error retrieving data");
+          }
+          const data = {
+            students: Object.values(JSON.parse(JSON.stringify(result))),
+          };
+          res.status(200);
+          res.send(data);
+        });
+      });
+
+      // res.status(200);
+      // res.send(
+      //   "Route 2: retrieve a list of students common to a given list of teachers"
+      // );
     } catch (e) {
       console.log(e);
       res.status(404);
