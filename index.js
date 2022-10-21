@@ -15,22 +15,72 @@ const main = async () => {
   });
   // 1. REGISTER ROUTE : register one or more students to a specified teacher
   app.post("/api/register", async (req, res) => {
-    res.send("Route 1: register one or more students to a specified teacher");
+    try {
+      // get data from body
+      var { teacher: teacherEmail, students } = req.body;
+      console.log(teacherEmail, students);
+
+      res.sendStatus(204);
+    } catch (e) {
+      console.log(err);
+      res.status(500);
+      res.send("Error writing to database");
+    }
   });
   // 2. READ ROUTE : retrieve a list of students common to a given list of teachers
   app.get("/api/commonstudents", async (req, res) => {
-    res.send(
-      "Route 2: retrieve a list of students common to a given list of teachers"
-    );
+    try {
+      // get data from query route
+      var teachers = req.query.teacher || null;
+
+      teachers && !Array.isArray(teachers) ? (teachers = [teachers]) : null;
+      console.log(teachers);
+
+      res.status(200);
+      res.send(
+        "Route 2: retrieve a list of students common to a given list of teachers"
+      );
+    } catch (e) {
+      console.log(err);
+      res.status(404);
+      res.send("Error retrieving data");
+    }
   });
   // 3. SUSPEND STUDENT ROUTE : suspend a specified student
   app.post("/api/suspend", (req, res) => {
-    // res.sendStatus(204);
-    res.send("Route 3: Suspend Student [POST]");
+    try {
+      // get data from body
+      var { student: studentEmail } = req.body;
+      console.log(studentEmail);
+
+      res.sendStatus(204);
+      // res.send("Route 3: Suspend Student [POST]");
+    } catch (e) {
+      console.log(err);
+      res.status(404);
+      res.send("Error retrieving data");
+    }
   });
   //4. ROUTE : retrieve a list of students who can receive a given notification
   app.post("/api/retrievefornotifications", (req, res) => {
-    res.send("Route 4: Retrieve Notifcation");
+    try {
+      // get data from body
+      var teacherEmail = req.body.teacher || null;
+      var notification = req.body.notification || null;
+
+      console.log(teacherEmail);
+      // Separate the message and the students' email list
+      var students = notification.split(" @");
+      var notificationMessage = students.splice(0, 1)[0];
+      console.log(notificationMessage, students);
+
+      res.sendStatus(204);
+      // res.send("Route 4: Retrieve Notifcation");
+    } catch (e) {
+      console.log(e);
+      res.status(404);
+      res.send("Error retrieving data");
+    }
   });
 };
 main();
