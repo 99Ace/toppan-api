@@ -16,6 +16,7 @@ var con = mysql.createConnection({
   user: process.env.USERNAME,
   password: process.env.PASSWORD,
   database: process.env.DATABASE,
+  multipleStatements: true,
 });
 
 con.connect(function (err) {
@@ -251,6 +252,57 @@ const main = async () => {
       console.log(e);
       res.status(500);
       res.send("Error writing to database");
+    }
+  });
+
+  // 5. ROUTE: RESET EVERYTHING IN TABLE
+  app.post("/api/reset", async (req, res) => {
+    try {
+      var sql = `
+        SET foreign_key_checks = 0;
+        TRUNCATE students_teachers;
+        TRUNCATE students;
+        TRUNCATE teachers;
+        SET foreign_key_checks = 1;
+        INSERT INTO teachers (email) VALUES ('teacherken@gmail.com'), ('teacherjon@gmail.com'), ('teacherdan@gmail.com');
+        INSERT INTO students (email, is_suspended, get_notification)
+          VALUES ("commonstudent1@gmail.com", 1, 1),("commonstudent2@gmail.com", 1, 1),("student_only_under_teacher_ken@gmail.com",0,0),("studentmary@gmail.com", 0, 1),("studentbob@gmail.com", 0, 1),("studentagnes@gmail.com", 0, 1),("studentmiche@gmail.com", 0, 1);
+        INSERT INTO students_teachers (teacher_id, student_id) VALUES (1,1),(1,2),(1,3),(1,5),(2,1),(2,2),(3,4),(3,6),(3,7);
+      `;
+
+      con.connect(function (err) {
+        con.query(sql, function (err, result) {
+          console.log("Tables all reset");
+        });
+      });
+      res.sendStatus(204);
+    } catch (e) {
+      console.log(e);
+      res.status(500);
+      res.send("Error resetting database");
+    }
+  });
+  // 6. ROUTE: CLEAR EVERYTHING IN TABLE
+  app.post("/api/clear", async (req, res) => {
+    try {
+      var sql = `
+        SET foreign_key_checks = 0;
+        TRUNCATE students_teachers;
+        TRUNCATE students;
+        TRUNCATE teachers;
+        SET foreign_key_checks = 1;
+      `;
+
+      con.connect(function (err) {
+        con.query(sql, function (err, result) {
+          console.log("Tables all cleared");
+        });
+      });
+      res.sendStatus(204);
+    } catch (e) {
+      console.log(e);
+      res.status(500);
+      res.send("Error clearing tables");
     }
   });
 };
