@@ -20,17 +20,21 @@ var con = mysql.createConnection({
 });
 
 con.connect(function (err) {
-  if (err) throw err;
+  if (err) {
+    res.status(500);
+    res.send("Error writing to database");
+  }
   console.log("Database Connected!");
 });
 
+// set up function to send query to database
 const sendSQL = (sql) => {
   con.connect(function (err) {
     con.query(sql, function (err, result) {
-      // if (err) {
-      //   res.status(500);
-      //   res.send("Error writing to database");
-      // }
+      if (err) {
+        res.status(500);
+        res.send("Error writing to database");
+      }
       return Object.values(JSON.parse(JSON.stringify(result)));
     });
   });
@@ -49,8 +53,6 @@ const main = async () => {
 
       // check if data is valid
       if (teacherEmail && students && Array.isArray(students)) {
-        console.log("data ok", teacherEmail, students);
-
         const sql = `INSERT INTO teachers (email)
         SELECT *
         FROM (
@@ -100,7 +102,7 @@ const main = async () => {
         res.sendStatus(204);
       } else {
         res.status(500);
-        res.send("Bad input fields");
+        res.send("Error writing to database");
       }
     } catch (e) {
       res.status(500);
@@ -116,9 +118,7 @@ const main = async () => {
       var teachers = req.query.teacher || null;
 
       teachers && !Array.isArray(teachers) ? (teachers = [teachers]) : null;
-      // console.log(teachers);
       var query = `'${teachers.join("','")}'`;
-      // console.log(query);
 
       const sql = `SELECT students.email
         FROM teachers
@@ -144,11 +144,6 @@ const main = async () => {
           res.send({ students });
         });
       });
-
-      // res.status(200);
-      // res.send(
-      //   "Route 2: retrieve a list of students common to a given list of teachers"
-      // );
     } catch (e) {
       console.log(e);
       res.status(404);
@@ -187,14 +182,11 @@ const main = async () => {
       var teacherEmail = req.body.teacher || null;
       var notification = req.body.notification || null;
 
-      console.log(teacherEmail);
       // Separate the message and the students' email list
       var students = notification.split(" @");
       var notificationMessage = students.splice(0, 1)[0];
-      console.log(notificationMessage, students);
 
       var query = `'${students.join("','")}'`;
-      console.log(query);
 
       const sql = `SELECT students.email
                   FROM teachers
@@ -209,7 +201,6 @@ const main = async () => {
                   GROUP BY student_id
                   HAVING
                       count(DISTINCT student_id) = 1;`;
-      console.log(sql);
       con.connect(function (err) {
         con.query(sql, function (err, result) {
           if (err) {
@@ -232,15 +223,14 @@ const main = async () => {
     }
   });
 
-  // EXTRA ROUTES : to create a new teacher
+  // 5. EXTRA ROUTES : to create a new teacher
   app.post("/api/teacher", async (req, res) => {
     try {
       // get data from body
       var teacherEmail = req.body.teacher || null;
-      console.log(teacherEmail);
 
       var sql = `INSERT INTO teachers (email) VALUES ('${teacherEmail}');`;
-      console.log(sql);
+
       con.connect(function (err) {
         con.query(sql, function (err, result) {
           console.log("New Teacher Inserted");
@@ -255,7 +245,7 @@ const main = async () => {
     }
   });
 
-  // 5. ROUTE: RESET EVERYTHING IN TABLE
+  // 6. EXTRA ROUTE: reload table with the defaults data: teachers, students and relationship table
   app.post("/api/reset", async (req, res) => {
     try {
       var sql = `
@@ -272,7 +262,7 @@ const main = async () => {
 
       con.connect(function (err) {
         con.query(sql, function (err, result) {
-          console.log("Tables all reset");
+          console.log("Tables reloaded");
         });
       });
       res.sendStatus(204);
@@ -282,7 +272,8 @@ const main = async () => {
       res.send("Error resetting database");
     }
   });
-  // 6. ROUTE: CLEAR EVERYTHING IN TABLE
+
+  // 7. EXTRA ROUTE: clear all data in table
   app.post("/api/clear", async (req, res) => {
     try {
       var sql = `
