@@ -18,15 +18,15 @@ _Task is to:_
 | DEPLOYED API LINK   | https://toppan-api-tech.onrender.com/ |
 | Code                | https://github.com/99Ace/toppan-api   |
 
-### **Reset the database**
+### **Reset / Clear the database**
 
-Before starting the testing, please run the following to reset the database.
-
-- [POST] https://toppan-api-tech.onrender.com/api/reset
+1. To reset the tables with the default data:- [POST] https://toppan-api-tech.onrender.com/api/reset
 
 ![Default table](images/summary_table.png)
 ![Teachers table](images/teachers.png)
 ![Students table](images/students.png)
+
+2. To empty all tables:- [POST] https://toppan-api-tech.onrender.com/api/clear
 
 ## **API routes**
 
