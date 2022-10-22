@@ -12,11 +12,12 @@ app.use(express.json());
 
 // Connect to Database
 var con = mysql.createConnection({
-  host: "localhost",
+  host: process.env.DB_HOST,
   user: process.env.USERNAME,
   password: process.env.PASSWORD,
   database: process.env.DATABASE,
 });
+
 con.connect(function (err) {
   if (err) throw err;
   console.log("Database Connected!");
