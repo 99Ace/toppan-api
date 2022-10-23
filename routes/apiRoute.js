@@ -17,8 +17,9 @@ const sendSQL = (sql) => {
   con.connect(function (err) {
     con.query(sql, function (err, result) {
       if (err) {
-        res.status(500);
-        res.send("Error writing to database");
+        const error = new Error("Error in accessing database");
+        error.code = 500;
+        throw error;
       }
       return Object.values(JSON.parse(JSON.stringify(result)));
     });
@@ -43,38 +44,23 @@ router.post("/register", async (req, res) => {
       students &&
       Array.isArray(students)
     ) {
-      const sql = `INSERT INTO teachers (email)
-        SELECT *
-        FROM (
-                SELECT
-                    '${teacherEmail}'
-            ) AS tmp
-        WHERE NOT EXISTS (
-                SELECT email
-                FROM teachers
-                WHERE
-                    email = '${teacherEmail}'
-            )
-        LIMIT 1;`;
       // INSERT IN TEACHER (IF NOT EXIST)
+      const sql = `INSERT INTO teachers (email)
+        SELECT * FROM ( SELECT '${teacherEmail}') AS tmp
+        WHERE NOT EXISTS (
+          SELECT email FROM teachers
+          WHERE email = '${teacherEmail}')
+        LIMIT 1;`;
       sendSQL(sql);
 
       // ITERATE THROUGH THE STUDENTS LIST
       students.map((studentEmail) => {
-        const sqlStudent = `INSERT INTO students (
-            email, is_suspended, get_notification
-          ) SELECT * FROM (
-              SELECT '${studentEmail}',
-                0,
-                1
-            ) AS tmp
+        const sqlStudent = `INSERT INTO students ( email, is_suspended, get_notification ) 
+        SELECT * FROM ( SELECT '${studentEmail}', 0, 1 ) AS tmp
           WHERE NOT EXISTS (
-            SELECT email
-            FROM students
-            WHERE
-              email = '${studentEmail}'
-          )
-          LIMIT 1;`;
+            SELECT email FROM students
+            WHERE email = '${studentEmail}')
+        LIMIT 1;`;
         // INSERT STUDENT (IF NOT EXIST)
         sendSQL(sqlStudent);
 
@@ -91,13 +77,14 @@ router.post("/register", async (req, res) => {
 
       res.sendStatus(204);
     } else {
-      res.status(400);
-      res.send("Invalid Input");
+      const error = new Error("Teacher or students information missing");
+      error.code = 400;
+      throw error;
     }
   } catch (e) {
-    res.status(500);
+    res.status(e.code);
     console.log(e);
-    res.send("Error writing to database");
+    res.send(e);
   }
 });
 
@@ -107,37 +94,49 @@ router.get("/commonstudents", async (req, res) => {
     // get data from query route
     var teachers = req.query.teacher || null;
 
-    teachers && !Array.isArray(teachers) ? (teachers = [teachers]) : null;
-    var query = `'${teachers.join("','")}'`;
+    // throw error if teacher info is missing
+    if (!teachers) {
+      const error = new Error("Teacher information missing");
+      error.code = 406;
+      throw error;
+    }
 
-    const sql = `SELECT students.email
-        FROM teachers
-          INNER JOIN students_teachers ON teachers.id = students_teachers.teacher_id
-          INNER JOIN students ON students_teachers.student_id = students.id
-        WHERE
-          teachers.email IN (${query})
-        GROUP BY student_id
-        HAVING
-          count(DISTINCT teacher_id) = ${teachers.length};`;
+    // set the query string for the teachers
+    var query;
+    if (Array.isArray(teachers)) {
+      query = `'${teachers.join("','")}'`;
+    } else {
+      query = `'${teachers}'`;
+      teachers = [teachers];
+    }
+    console.log(teachers);
+
+    const sql = `SELECT students.email FROM teachers
+            INNER JOIN students_teachers ON teachers.id = students_teachers.teacher_id
+            INNER JOIN students ON students_teachers.student_id = students.id
+            WHERE teachers.email IN (${query})
+            GROUP BY student_id HAVING count(DISTINCT teacher_id) = ${teachers.length};`;
 
     con.connect(function (err) {
       con.query(sql, function (err, result) {
         if (err) {
-          res.status(404);
-          res.send("Error retrieving data");
+          const error = new Error("Error accessing database");
+          error.code = 404;
+          throw err;
+        } else {
+          console.log(result);
+          const response = Object.values(JSON.parse(JSON.stringify(result)));
+          const students = [];
+          response.map((t) => students.push(t.email));
+          res.status(200);
+          res.send({ students });
         }
-        const response = Object.values(JSON.parse(JSON.stringify(result)));
-        const students = [];
-        response.map((t) => students.push(t.email));
-
-        res.status(200);
-        res.send({ students });
       });
     });
   } catch (e) {
     console.log(e);
-    res.status(404);
-    res.send("Error retrieving data");
+    res.status(e.code);
+    res.send(e);
   }
 });
 
