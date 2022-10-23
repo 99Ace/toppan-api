@@ -40,7 +40,7 @@ router.post("/register", async (req, res) => {
     // check if data is valid
     if (
       teacherEmail &&
-      typeof teacherEmail == "string" &&
+      typeof teacherEmail === "string" &&
       students &&
       Array.isArray(students)
     ) {
@@ -146,21 +146,20 @@ router.post("/suspend", (req, res) => {
     // get data from body
     var studentEmail = req.body.student || null;
 
-    if (studentEmail) {
+    if (studentEmail && typeof studentEmail === "string") {
       var sql = `UPDATE students
                   SET is_suspended = 1
-                  WHERE
-                  email = "${studentEmail}";`;
+                  WHERE email = "${studentEmail}";`;
       sendSQL(sql);
 
       res.sendStatus(204);
     } else {
-      res.status(500);
+      res.status(400);
       res.send("Error updating student record");
     }
   } catch (e) {
-    res.status(500);
-    res.send("Error updating student record");
+    res.status(e.code);
+    res.send(e);
   }
 });
 

@@ -78,3 +78,33 @@ describe("Route 2b: check for error when empty query", () => {
     expect(res.statusCode).toBe(406);
   });
 });
+
+// Route 3 : suspend a specified student
+// a. CHECK SUCCESS ROUTE
+describe("Route 3a: check success update of student", () => {
+  it("should return status 204", async () => {
+    const res = await request(app).post("/api/suspend").send({
+      student: "studentmary@gmail.com",
+    });
+    expect(res.statusCode).toBe(204);
+  });
+});
+
+// b. CHECK ERROR : INCOMPLETE OR EMPTY BODY
+describe("Route 3b: check for error when incomplete or empty body", () => {
+  // sample errors cases
+  const errBodySample = [
+    // wrong  data format
+    { student: ["studentmary@gmail.com"] },
+    // empty body
+    {},
+  ];
+
+  it("should return status 400", async () => {
+    for (body of errBodySample) {
+      const res = await request(app).post("/api/suspend").send(body);
+      expect(res.statusCode).toBe(400);
+    }
+  });
+});
+
