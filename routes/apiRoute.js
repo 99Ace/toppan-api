@@ -12,14 +12,6 @@ var con = mysql.createConnection({
   multipleStatements: true,
 });
 
-con.connect(function (err) {
-  if (err) {
-    res.status(500);
-    res.send("Error writing to database");
-  }
-  console.log("Database Connected!");
-});
-
 // set up function to send query to database
 const sendSQL = (sql) => {
   con.connect(function (err) {
@@ -45,7 +37,12 @@ router.post("/register", async (req, res) => {
     var students = req.body.students || null;
 
     // check if data is valid
-    if (teacherEmail && students && Array.isArray(students)) {
+    if (
+      teacherEmail &&
+      typeof teacherEmail == "string" &&
+      students &&
+      Array.isArray(students)
+    ) {
       const sql = `INSERT INTO teachers (email)
         SELECT *
         FROM (
@@ -94,8 +91,8 @@ router.post("/register", async (req, res) => {
 
       res.sendStatus(204);
     } else {
-      res.status(500);
-      res.send("Error writing to database");
+      res.status(400);
+      res.send("Invalid Input");
     }
   } catch (e) {
     res.status(500);

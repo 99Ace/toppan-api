@@ -11,7 +11,6 @@ app.use(express.json());
 // Load in Routes
 app.use("/api", apiRoute);
 
-//  main = async () => {
 app.get("/", async (req, res) => {
   res.send("Welcome to 99Ace World");
 });
