@@ -144,12 +144,12 @@ describe("Route 4a: check success retrieval of students listing", () => {
 describe("Route 4b: check for error when incomplete or empty body", () => {
   // sample error data
   const errorBodySample = [
-    // no teacher data
+    // missing teacher data
     {
       notification:
         "Hello students! @studentagnes@gmail.com @studentmiche@gmail.com",
     },
-    // no notification data
+    // missing notification data
     {
       teacher: "teacherken@gmail.com",
     },

@@ -11,7 +11,10 @@ _Task is to:_
 
 #
 
-## **DEPLOYED API LINK** :
+## **MySQL Schema**
+![MySQL table](images/mysql_design.png)
+
+## **DEPLOYED API LINK** 
 
 | Links to API & Code |                                       |
 | ------------------- | ------------------------------------- |
