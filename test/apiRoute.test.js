@@ -108,3 +108,61 @@ describe("Route 3b: check for error when incomplete or empty body", () => {
   });
 });
 
+// Route 4 : retrieve a list of students who can receive a given notification
+// a. CHECK SUCCESS ROUTE
+describe("Route 4a: check success retrieval of students listing", () => {
+  it("should return status 200, json data, body.recipents to be defined", async () => {
+    // sample body data
+    const bodySample = [
+      // notification => including student emails
+      {
+        teacher: "teacherken@gmail.com",
+        notification:
+          "Hello students! @studentagnes@gmail.com @studentmiche@gmail.com",
+      },
+      // notification => no student named
+      {
+        teacher: "teacherken@gmail.com",
+        notification: "Hey everybody",
+      },
+    ];
+
+    for (body of bodySample) {
+      const res = await request(app)
+        .post("/api/retrievefornotifications")
+        .send(body);
+      expect(res.statusCode).toBe(200);
+      expect(res.headers["content-type"]).toEqual(
+        expect.stringContaining("json")
+      );
+      expect(res.body.recipients).toBeDefined();
+    }
+  });
+});
+
+// b. CHECK ERROR ROUTE
+describe("Route 4b: check for error when incomplete or empty body", () => {
+  // sample error data
+  const errorBodySample = [
+    // no teacher data
+    {
+      notification:
+        "Hello students! @studentagnes@gmail.com @studentmiche@gmail.com",
+    },
+    // no notification data
+    {
+      teacher: "teacherken@gmail.com",
+    },
+    // empty data
+    {},
+  ];
+
+  it("should return status 404, error message", async () => {
+    for (body of errorBodySample) {
+      const res = await request(app)
+        .post("/api/retrievefornotifications")
+        .send(body);
+      expect(res.statusCode).toBe(404);
+    }
+  });
+});

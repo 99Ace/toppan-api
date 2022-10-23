@@ -170,6 +170,11 @@ router.post("/retrievefornotifications", (req, res) => {
     var teacherEmail = req.body.teacher || null;
     var notification = req.body.notification || null;
 
+    if (!teacherEmail || !notification) {
+      const error = new Error("Teacher information or notification missing");
+      error.code = 404;
+      throw error;
+    }
     // Separate the message and the students' email list
     var students = notification.split(" @");
     var notificationMessage = students.splice(0, 1)[0];
@@ -196,18 +201,18 @@ router.post("/retrievefornotifications", (req, res) => {
           res.send("Error retrieving data");
         }
         const response = Object.values(JSON.parse(JSON.stringify(result)));
-        const recipents = [];
-        response.map((t) => recipents.push(t.email));
+        const recipients = [];
+        response.map((t) => recipients.push(t.email));
 
         res.status(200);
-        res.send({ recipents });
+        res.send({ recipients });
       });
     });
     // res.send("Route 4: Retrieve Notifcation");
   } catch (e) {
     console.log(e);
-    res.status(404);
-    res.send("Unable to retrieving data");
+    res.status(e.code);
+    res.send(e);
   }
 });
 
